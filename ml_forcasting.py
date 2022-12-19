@@ -8,9 +8,9 @@ from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt 
 from yahoofinancials import YahooFinancials
 
-START = '2021-11-01'
+START = '2017-01-01'
 END = '2022-11-30'
-TICKER = 'AAPL'
+TICKER = 'TSLA'
 
 def get_data(ticker, start_date, end_date):
     yahoo_financials = YahooFinancials(ticker)
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     lr = LinearRegression().fit(X_train, y_train)
     knn = KNeighborsRegressor().fit(X_train, y_train)
 
-    x_future = prices.drop(['prediction'], axis=1)[:-future_days]
+    x_future = prices.drop(['prediction'], axis=1)[-future_days:]
     x_future = x_future.tail(future_days)
     x_future = np.array(x_future)
     y_future = np.array(prices['close'])[-future_days:]
@@ -65,9 +65,15 @@ if __name__ == "__main__":
     lr_pred = lr.predict(x_future)
     knn_pred = knn.predict(x_future)
     
-    mse = mean_squared_error(y_future, tree_pred)
-    rmse = math.sqrt(mse)  
-    print("RMSE for Decision Tree Regressor = ", rmse) 
+    tree_mse = mean_squared_error(y_future, tree_pred)
+    tree_score = tree.score(x_future, y_future)
+    lr_mse = mean_squared_error(y_future, lr_pred)
+    lr_score = lr.score(x_future, y_future)
+    knn_mse = mean_squared_error(y_future, knn_pred)
+    knn_score = knn.score(x_future, y_future)
+    scores = pd.DataFrame({'Models':['Decision Tree Regressor', 'Linear Regression', 'KNN Regressor'], 
+        'Score':[tree_score, lr_score, knn_score], 'RMSE':[math.sqrt(tree_mse), math.sqrt(lr_mse), math.sqrt(knn_mse)]})
+    print(scores)
 
     validation = prices[['close']][X_train.shape[0]:]
     validation['tree_pred'] = tree_pred
@@ -79,7 +85,7 @@ if __name__ == "__main__":
     plt.title(f'{TICKER} Stock Price Forecasting')
     plt.xlabel("Days")
     plt.ylabel("Closing Price USD")
-    plt.plot(prices['close'], label='Closing Price')
+    #plt.plot(prices['close'], label='Closing Price')
     plt.plot(validation['close'], 'g', label='Original Price')
     plt.plot(validation['tree_pred'], 'r', label='Decision Tree Regressor')
     plt.plot(validation['knn_pred'], label='KNN Regressor')
