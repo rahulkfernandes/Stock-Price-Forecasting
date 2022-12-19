@@ -9,20 +9,20 @@ from yahoofinancials import YahooFinancials
 
 START = '2018-01-01'
 END = '2022-11-30'
-TICKER = 'AAPL'
+TICKER = 'MSFT'
 
 def get_data(ticker, start_date, end_date):
     yahoo_financials = YahooFinancials(ticker)
     price_data = yahoo_financials.get_historical_price_data(start_date, end_date, 'daily')
     df = pd.DataFrame(price_data[ticker]['prices'])
-    df.drop(['date', 'adjclose', 'formatted_date', 'high', 'low', 'open', 'volume'], axis=1, inplace=True)
+    df.drop(['date', 'adjclose', 'formatted_date', 'high', 'low', 'open'], axis=1, inplace=True)
     return df
 
 def plot_ma(ticker, train_df):
     ma100 = train_df['close'].rolling(100).mean()
     ma200 = train_df['close'].rolling(200).mean()
     plt.figure(figsize = (15,5))
-    plt.plot(train_df['close'], label='Training Prices')
+    plt.plot(train_df['close'], label='Prices')
     plt.plot(ma100, 'r', label='100 Day Moving Average')
     plt.plot(ma200, 'g', label='200 Day Moving Average')
     plt.title(f'{ticker} Price Chart')
@@ -38,17 +38,18 @@ if __name__ == "__main__":
 
     future_days = 30
     prices['prediction'] = prices[['close']].shift(-future_days)
-    x = np.array(prices['close'])[:-future_days].reshape(-1,1)
-    y = np.array(prices['prediction'])[:-future_days].reshape(-1,1)
+    x = np.array(prices.drop(['prediction'], axis=1))[:-future_days]
+    y = np.array(prices['prediction'])[:-future_days]
 
     X_train, X_test ,y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=13)
+
     tree = DecisionTreeRegressor().fit(X_train, y_train)
     lr = LinearRegression().fit(X_train, y_train)
     knn = KNeighborsRegressor().fit(X_train, y_train)
 
-    x_future = prices['close'][:-future_days]
+    x_future = prices.drop(['prediction'], axis=1)[:-future_days]
     x_future = x_future.tail(future_days)
-    x_future = np.array(x_future).reshape(-1,1)
+    x_future = np.array(x_future)
 
     tree_pred = tree.predict(x_future)
     lr_pred = lr.predict(x_future)
@@ -66,10 +67,10 @@ if __name__ == "__main__":
     plt.title(f'{TICKER} Stock Price Forecasting')
     plt.xlabel("Days")
     plt.ylabel("Closing Price USD")
-    plt.plot(prices['close'], label='Closing Price')
+    #plt.plot(prices['close'], label='Closing Price')
     plt.plot(validation['close'], 'g', label='Original Price')
     plt.plot(validation['tree_pred'], 'r', label='Decision Tree Regressor')
-    plt.plot(validation['knn_pred'], label='KNN Regressor')
+    #plt.plot(validation['knn_pred'], label='KNN Regressor')
     plt.plot(validation['lr_pred'], 'y', label='Linear Regression')
     plt.legend()
     plt.show()
