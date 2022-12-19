@@ -52,7 +52,9 @@ if __name__ == "__main__":
 
     tree_pred = tree.predict(x_future)
     lr_pred = lr.predict(x_future)
-    knn_pred = lr.predict(x_future)
+    knn_pred = knn.predict(x_future)
+    tree_score = tree.score(X_test, y_test)
+    print(f"Decision Tree Regressor Score = {tree_score}")
 
     validation = prices[['close']][x.shape[0]:]
     validation['tree_pred'] = tree_pred
