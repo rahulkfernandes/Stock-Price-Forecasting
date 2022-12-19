@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
     future_days = 30
     prices['prediction'] = prices[['close']].shift(-future_days)
-    X_train = np.array(prices.drop(['prediction'], axis=1))[:-future_days]
+    X_train = np.array(prices.drop(['prediction'], axis=1)[:-future_days])
     y_train = np.array(prices['prediction'])[:-future_days]
     #plot_train_test(TICKER, prices)
 
