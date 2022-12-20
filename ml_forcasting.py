@@ -8,9 +8,9 @@ from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt 
 from yahoofinancials import YahooFinancials
 
-START = '2017-01-01'
+START = '2019-01-01'
 END = '2022-11-30'
-TICKER = 'TSLA'
+TICKER = 'AAPL'
 
 def get_data(ticker, start_date, end_date):
     yahoo_financials = YahooFinancials(ticker)
@@ -46,17 +46,17 @@ if __name__ == "__main__":
     prices = get_data(TICKER, START, END)
     #plot_ma(TICKER, prices)
 
-    future_days = 30
+    future_days = 15
     prices['prediction'] = prices[['close']].shift(-future_days)
-    X_train = np.array(prices.drop(['prediction'], axis=1)[:-future_days])
-    y_train = np.array(prices['prediction'][:-future_days])
+    X_train = np.array(prices.drop(['prediction'], axis=1)[:-future_days*2])
+    y_train = np.array(prices['prediction'][:-future_days*2])
     #plot_train_test(TICKER, prices)
 
     tree = DecisionTreeRegressor().fit(X_train, y_train)
     lr = LinearRegression().fit(X_train, y_train)
     knn = KNeighborsRegressor().fit(X_train, y_train)
 
-    x_future = prices.drop(['prediction'], axis=1)[-future_days:]
+    x_future = prices.drop(['prediction'], axis=1)[:-future_days]
     x_future = x_future.tail(future_days)
     x_future = np.array(x_future)
     y_future = np.array(prices['close'])[-future_days:]
@@ -75,10 +75,10 @@ if __name__ == "__main__":
         'Score':[tree_score, lr_score, knn_score], 'RMSE':[math.sqrt(tree_mse), math.sqrt(lr_mse), math.sqrt(knn_mse)]})
     print(scores)
 
-    validation = prices[['close']][X_train.shape[0]:]
-    validation['tree_pred'] = tree_pred
+    validation = prices[['close']][-future_days:]
     validation['lr_pred'] = lr_pred
     validation['knn_pred'] = knn_pred
+    validation['tree_pred'] = tree_pred
     
     plt.style.use("bmh")
     plt.figure(figsize=(15,5))
