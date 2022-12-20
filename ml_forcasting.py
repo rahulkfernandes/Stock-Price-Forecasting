@@ -2,13 +2,14 @@ import numpy as np
 import pandas as pd
 import math
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, ElasticNet, BayesianRidge
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.ensemble import AdaBoostRegressor
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt 
 from yahoofinancials import YahooFinancials
 
-START = '2019-01-01'
+START = '2018-12-01'
 END = '2022-11-30'
 TICKER = 'AAPL'
 
@@ -55,6 +56,9 @@ if __name__ == "__main__":
     tree = DecisionTreeRegressor().fit(X_train, y_train)
     lr = LinearRegression().fit(X_train, y_train)
     knn = KNeighborsRegressor().fit(X_train, y_train)
+    el = ElasticNet().fit(X_train, y_train)
+    ada = AdaBoostRegressor().fit(X_train, y_train)
+    bay = BayesianRidge().fit(X_train, y_train)
 
     x_future = prices.drop(['prediction'], axis=1)[:-future_days]
     x_future = x_future.tail(future_days)
@@ -64,21 +68,35 @@ if __name__ == "__main__":
     tree_pred = tree.predict(x_future)
     lr_pred = lr.predict(x_future)
     knn_pred = knn.predict(x_future)
-    
+    el_pred = el.predict(x_future)
+    ada_pred = ada.predict(x_future)
+    bay_pred = bay.predict(x_future)
+
     tree_mse = mean_squared_error(y_future, tree_pred)
     tree_score = tree.score(x_future, y_future)
     lr_mse = mean_squared_error(y_future, lr_pred)
     lr_score = lr.score(x_future, y_future)
     knn_mse = mean_squared_error(y_future, knn_pred)
     knn_score = knn.score(x_future, y_future)
-    scores = pd.DataFrame({'Models':['Decision Tree Regressor', 'Linear Regression', 'KNN Regressor'], 
-        'Score':[tree_score, lr_score, knn_score], 'RMSE':[math.sqrt(tree_mse), math.sqrt(lr_mse), math.sqrt(knn_mse)]})
+    el_mse = mean_squared_error(y_future, el_pred)
+    el_score = el.score(x_future, y_future)
+    ada_mse = mean_squared_error(y_future, ada_pred)
+    ada_score = ada.score(x_future, y_future)
+    bay_mse = mean_squared_error(y_future, bay_pred)
+    bay_score = ada.score(x_future, y_future)
+    scores = pd.DataFrame({
+        'Models':['DecisionTree', 'Linear', 'KNN', 'ElasticNet', 'AdaBoost', 'BaysianRidge'], 
+        'Score':[tree_score, lr_score, knn_score, el_score, ada_score, bay_score], 
+        'RMSE':[math.sqrt(tree_mse), math.sqrt(lr_mse), math.sqrt(knn_mse), math.sqrt(el_mse), math.sqrt(ada_mse), math.sqrt(bay_mse)]})
     print(scores)
 
     validation = prices[['close']][-future_days:]
     validation['lr_pred'] = lr_pred
     validation['knn_pred'] = knn_pred
     validation['tree_pred'] = tree_pred
+    validation['el_pred'] = el_pred
+    validation['ada_pred'] = ada_pred
+    validation['bay_pred'] = bay_pred
     
     plt.style.use("bmh")
     plt.figure(figsize=(15,5))
@@ -89,6 +107,9 @@ if __name__ == "__main__":
     plt.plot(validation['close'], 'g', label='Original Price')
     plt.plot(validation['tree_pred'], 'r', label='Decision Tree Regressor')
     plt.plot(validation['knn_pred'], label='KNN Regressor')
+    plt.plot(validation['el_pred'], label='ElasticNet Regressor')
+    plt.plot(validation['ada_pred'], label='AdaBoost Regressor')
+    plt.plot(validation['bay_pred'], label='BaysianRidge Regressor')
     plt.plot(validation['lr_pred'], 'y', label='Linear Regression')
     plt.legend()
     plt.show()
